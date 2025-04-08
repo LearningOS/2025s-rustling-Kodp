@@ -91,6 +91,7 @@ fn write_image(
     Ok(())
 }
 
+//$ ./target/release/mandelbrot mandel.png 16000x12000 -1.20,0.35 -1,0.20
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() != 5 {
@@ -105,7 +106,37 @@ fn main() {
     let lower_right: Complex<f64> = parse_complex(&args[4]).expect("error parsing lower right corner point");
     let mut pixels: Vec<u8> = vec![0; bounds.0 * bounds.1];
 
-    render(&mut pixels, bounds, upper_left, lower_right);
+    let threads = 12;
+    let rows_per_band = bounds.1 / threads + 1;  // 每个线程渲染的条带，所占的像素宽度
+    
+    {
+        // chunks_mut 返回可变不重叠的切片，每一片 chunk_size 大小。
+        // chunk_size = rows_per_band * bounds.0，表示一条带包含的像素数量。
+        // collect 会建一个向量保存这些可变不重叠的切片。
+        let bands: Vec<&mut [u8]> = 
+            pixels.chunks_mut(rows_per_band * bounds.0).collect();
+            // scope函数会等待所有线程执行完后返回。
+            crossbeam::scope(|spawner: &crossbeam::thread::Scope<'_>|{
+                // into_iter 在循环体每次迭代中，赋予条带独占所有权
+                for (i, band) in bands.into_iter().enumerate() {
+                    let top = rows_per_band * i;
+                    let height = band.len() / bounds.0;
+                    let band_bounds = (bounds.0, height);
+                    let band_upper_left = 
+                        pixel_to_point(bounds, (0, top), upper_left, lower_right);
+                    let band_lower_right = 
+                        pixel_to_point(bounds, (bounds.0, top+height), upper_left, lower_right);
+
+                    spawner.spawn(move|_| {
+                        render(band, band_bounds, band_upper_left, band_lower_right);
+                    });
+
+            }
+        }).unwrap();
+        
+    }
+
+    // render(&mut pixels, bounds, upper_left, lower_right); // 单线程
 
     write_image(&args[1], &pixels, bounds).expect("error writing PNG file");
 
