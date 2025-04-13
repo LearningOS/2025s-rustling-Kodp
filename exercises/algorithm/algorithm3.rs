@@ -3,10 +3,33 @@
 	This problem requires you to implement a sorting algorithm
 	you can use bubble sorting, insertion sorting, heap sorting, etc.
 */
-// I AM NOT DONE
 
-fn sort<T>(array: &mut [T]){
-	//TODO
+fn sort<T: Ord + Clone>(arr: &mut [T]){
+	if arr.len() <= 1 {
+        return;
+    }
+    let piv = partition(arr);
+    let (l, r) = arr.split_at_mut(piv);
+    sort(l);
+    if r.len() > 1 {
+        sort(&mut r[1..]);
+    }
+}
+
+fn partition<T: Ord + Clone>(arr: &mut [T]) -> usize {
+    let pivot_index = arr.len() - 1;
+    let pivot = arr[pivot_index].clone();
+    let mut i = 0;
+    // 遍历除 pivot 外的所有元素, 小于等于 pivot 的交换到左侧
+    for j in 0..pivot_index {
+        if arr[j] <= pivot {
+            arr.swap(i, j);
+            i += 1;
+        }
+    }
+    // 将 pivot 放到正确位置
+    arr.swap(i, pivot_index);
+    i
 }
 #[cfg(test)]
 mod tests {
