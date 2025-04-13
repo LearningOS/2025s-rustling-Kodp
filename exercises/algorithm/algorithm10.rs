@@ -89,6 +89,7 @@ pub trait Graph {
     }
     fn nodes(&self) -> HashSet<&String> {
         self.adjacency_table().keys().collect()
+        
     }
     fn edges(&self) -> Vec<(&String, &String, i32)> {
         let mut edges = Vec::new();
