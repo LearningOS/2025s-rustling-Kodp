@@ -23,15 +23,17 @@ struct Person {
 enum ParsePersonError {
     // Empty input string
     Empty,
+
     // Incorrect number of fields
     BadLen,
+
     // Empty name field
     NoName,
+
     // Wrapped error from parse::<usize>()
     ParseInt(ParseIntError),
 }
 
-// I AM NOT DONE
 
 // Steps:
 // 1. If the length of the provided string is 0, an error should be returned
@@ -52,6 +54,20 @@ enum ParsePersonError {
 impl FromStr for Person {
     type Err = ParsePersonError;
     fn from_str(s: &str) -> Result<Person, Self::Err> {
+        if s.len() == 0 {
+            return Err(ParsePersonError::Empty);
+        }
+        let v:Vec<&str> = s.split(',').collect();
+        if v.len() != 2 {
+            return Err(ParsePersonError::BadLen);
+        }
+        if v[0] == "" {
+            return Err(ParsePersonError::NoName);
+        }
+        match v[1].to_string().parse::<usize>() {
+            Ok(age) => Ok(Person {name:v[0].to_string(),age}),
+            Err(e) => Err(ParsePersonError::ParseInt(e))
+        }
     }
 }
 
