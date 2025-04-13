@@ -8,7 +8,7 @@
 // function would follow. In this exercise, "Rust" is used, while other variants exists like
 // "C" for standard C ABI, "stdcall" for the Windows ABI.
 //
-// The externally imported functions are declared in the extern blocks, with a semicolon to
+// The externally imported functions are declared in the `extern` blocks, with a semicolon to
 // mark the end of signature instead of curly braces. Some attributes can be applied to those
 // function declarations to modify the linking behavior, such as #[link_name = ".."] to
 // modify the actual symbol names.
@@ -27,15 +27,17 @@
 //
 // You should NOT modify any existing code except for adding two lines of attributes.
 
-// I AM NOT DONE
 
 extern "Rust" {
     fn my_demo_function(a: u32) -> u32;
+    // 告诉编译器将这个函数的实现链接到 my_demo_function。这使得 my_demo_function_alias 成为 my_demo_function 的别名，
+    #[link_name = "my_demo_function"]  
     fn my_demo_function_alias(a: u32) -> u32;
 }
 
 mod Foo {
     // No `extern` equals `extern "Rust"`.
+    #[no_mangle]  // 确保函数名保持为 my_demo_function，不被 Rust 修饰
     fn my_demo_function(a: u32) -> u32 {
         a
     }
